@@ -25,7 +25,7 @@ class DigitalInputHandler : public TPDO {
         void getInput (void);
         
     private:
-        uint32_t *pDigitalInput;
+        uint32_t &digitalInput;
         uint32_t filtredInput[FILTER_SIZE];
         size_t   index = 0;
 };
