@@ -41,12 +41,7 @@ Q_STATE_DEF(RemoteMsgServer, idle) {
             status = Q_RET_HANDLED;
             break;
         }
-        case TPDO_RC_SIG: 
         case TPDO_DSPLY_SIG: 
-        case TPDO_AS300_SIG:
-        case TPDO1_DPLX_SIG:
-        case TPDO2_DPLX_SIG:
-        case TPDO3_DPLX_SIG:
         case CANOPEN_TX_SIG:
         case DATA_ON_CAN0_RECEIVED_SIG: {
             uint32_t pTxMailBox;
@@ -83,12 +78,7 @@ Q_STATE_DEF(RemoteMsgServer, busy) {
             status = Q_RET_HANDLED;
             break;
         }
-        case TPDO_RC_SIG: 
         case TPDO_DSPLY_SIG: 
-        case TPDO_AS300_SIG:
-        case TPDO1_DPLX_SIG:
-        case TPDO2_DPLX_SIG:
-        case TPDO3_DPLX_SIG:
         case CANOPEN_TX_SIG:
         case DATA_ON_CAN0_RECEIVED_SIG: {
             co->defer(&requestQueue, e);
