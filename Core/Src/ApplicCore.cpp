@@ -30,7 +30,7 @@ ApplicCore::ApplicCore (void) : QActive(initial), timeEvt50ms(this, TIMEOUT_20MS
     OD_Instance->add_rpdos(ledCabinCall);
     rpdo2DataUnpacker = new RPDO2_DataUnpacker(0x280 + MB_2_SERIAL16_ID_, 50 / TIME_BASE, 500 / TIME_BASE, 0);
     OD_Instance->add_rpdos(rpdo2DataUnpacker);
-    input = new DigitalInputHandler(digitalInput, 0x300 + MB_2_SERIAL16_ID_, 50 / TIME_BASE, 500 / TIME_BASE, 0);   
+    input = new DigitalInputHandler(&digitalInput, 0x300 + MB_2_SERIAL16_ID_, 50 / TIME_BASE, 500 / TIME_BASE, 0);   
     OD_Instance->add_tpdos(input);
 }
 
