@@ -108,33 +108,30 @@ void CANOpen::notify (TPDO* tpdo) {
     QF::PUBLISH((QEvt *)pe, &dummy);
 }
 
-void CANOpen::transmit (TPDO *tpdo) {
+void CANOpen::transmit(TPDO *tpdo) {
     if (tpdo->len) {
-        CANOpenEvt *pe;
-        pe = Q_NEW(CANOpenEvt, CANOPEN_TX_SIG);
+        CANOpenEvt *pe = Q_NEW(CANOpenEvt, CANOPEN_TX_SIG);
         pe->cob_id_ = tpdo->cob_id;
         pe->length_ = 8;
-        // encrypt data before transmission 
-        auto crypto = std::make_unique<Crypto>(crypto_key);
+
+        // Set the timestamp in the first 4 bytes of tpdo->data
         for (size_t i = 0; i < 4; i++) {
             tpdo->data[i] = static_cast<uint8_t>(time_stamp >> (i * 8));
         }
-        std::vector<uint8_t> vector_data(tpdo->data, tpdo->data + sizeof(tpdo->data));
-        vector_data = crypto->encrypt(vector_data);
-        for (uint32_t i = 0; i < 8; i++) {
-            (pe->buffer)[i] = vector_data[i];
-        
 
-        for (uint32_t i = 0; i < 4; i++) {
-            tpdo->data[i] = static_cast<uint8_t>(time_stamp >> (i * 8));
+        // Encrypt data before transmission
+        auto crypto = std::make_unique<Crypto>(crypto_key);
+        std::vector<uint8_t> vector_data(tpdo->data, tpdo->data + tpdo->len);
+        vector_data = crypto->encrypt(vector_data);
+
+        // Copy encrypted data to pe->buffer
+        for (size_t i = 0; i < vector_data.size() && i < 8; i++) {
+            pe->buffer[i] = vector_data[i];
         }
-        for (uint32_t i = 0; i < 8; i++) {
-            (pe->buffer)[i] = tpdo->data[i];
-        }
+
         QF::PUBLISH((QEvt *)pe, &dummy);
     }
 }
-
 void CANOpen::processTPDOs() {
     for (auto tpdo : OD_Instance->tpdos_vect) {
         if (tpdo->inhibitTime != 0) {
