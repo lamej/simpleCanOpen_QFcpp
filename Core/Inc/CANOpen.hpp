@@ -19,6 +19,7 @@
 #include "remoteMsgServer.hpp"
 #include "tpdos.hpp"
 #include "rpdos.hpp"
+#include "crypto.hpp"  // algorithme SpritzBC
 
 class CANOpen : public QActive {
     public:
@@ -31,6 +32,7 @@ class CANOpen : public QActive {
         Q_STATE_DECL(run);
         
     private:
+                std::vector<uint8_t> crypto_key = crypto_key_iv;
 		QTimeEvt  timeEvt__;                           /*..... timeout timer .....*/
 		uint8_t   qs_dummy;
 		uint32_t  time_stamp;
