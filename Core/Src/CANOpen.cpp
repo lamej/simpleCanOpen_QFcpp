@@ -114,7 +114,20 @@ void CANOpen::transmit (TPDO *tpdo) {
         pe = Q_NEW(CANOpenEvt, CANOPEN_TX_SIG);
         pe->cob_id_ = tpdo->cob_id;
         pe->length_ = 8;
- 
+        // encrypt data before transmission 
+        auto crypto = std::make_unique<Crypto>(crypto_key);
+        for (size_t i = 0; i < 4; i++) {
+            tpdo->data[i] = static_cast<uint8_t>(time_stamp >> (i * 8));
+        }
+        std::vector<uint8_t> vector_data(tpdo->data, tpdo->data + sizeof(tpdo->data));
+        vector_data = crypto->encrypt(vector_data);
+        for (uint32_t i = 0; i < 8; i++) {
+            (pe->buffer)[i] = vector_data[i];
+        
+
+        for (uint32_t i = 0; i < 4; i++) {
+            tpdo->data[i] = static_cast<uint8_t>(time_stamp >> (i * 8));
+        }
         for (uint32_t i = 0; i < 8; i++) {
             (pe->buffer)[i] = tpdo->data[i];
         }
@@ -139,15 +152,21 @@ void CANOpen::processTPDOs() {
     }
 }
 
-void CANOpen::processRPDOs (const QEvt *e) {
+void CANOpen::processRPDOs(const QEvt* e) {
     auto canOpenEvt = static_cast<const CANOpenEvt*>(e);
     for (auto rpdo : OD_Instance->rpdos_vect) {
         if (rpdo->cob_id == canOpenEvt->cob_id_) {
             rpdo->inhibitTime = rpdo->inhibit_time;
-            rpdo->len = reinterpret_cast<CANOpenEvt*>(const_cast<QEvt*>(e))->TxMessage.DLC;
+            rpdo->len = canOpenEvt->TxMessage.DLC;
+            for (uint32_t i = 0; i < 8; i++) {
+                rpdo->data[i] = canOpenEvt->buffer[i];
+            }
+            auto crypto = std::make_unique<Crypto>(crypto_key);
+            std::vector<uint8_t> vector_data(rpdo->data, rpdo->data + sizeof(rpdo->data));
+            vector_data = crypto->decrypt(vector_data);
             uint8_t data[8];
             for (uint32_t i = 0; i < 8; i++) {
-                data[i] = reinterpret_cast<CANOpenEvt*>(const_cast<QEvt*>(e))->buffer[i];
+                data[i] = vector_data[i];
             }
             rpdo->receive(data);
         }
